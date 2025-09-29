@@ -1,0 +1,38 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Image {
+  id         Int         @id @default(autoincrement())
+  url        String // e.g. "https://example.com/image.jpg"
+  characters Character[]
+  highScores HighScore[]
+}
+
+model Character {
+  id      Int    @id @default(autoincrement())
+  name    String // e.g. "Waldo"
+  x       Int // 0-1 normalized coordinate
+  y       Int // 0-1 normalized coordinate
+  imageId Int
+  image   Image  @relation(fields: [imageId], references: [id])
+}
+
+model HighScore {
+  id      Int    @id @default(autoincrement())
+  name    String
+  time    Float // time in seconds
+  imageId Int
+  image   Image  @relation(fields: [imageId], references: [id])
+}
