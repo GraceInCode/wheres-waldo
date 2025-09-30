@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High Scores</title>
+</head>
+<body>
+    <h1>High Scores</h1>
+    <table>
+        <thead>
+            <tr><th>Rank</th><th>Name</th><th>Time (s)</th></tr>
+        </thead>
+        <tbody id="scores-body"></tbody>
+    </table>
+    <a href="/">Back to Game</a>
+    <script>
+        async function loadScores() {
+            const response = await fetch('/scores');
+            const scores = await response.json();
+            const tbody = document.getElementById('scores-body');
+            scores.forEach((score, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${index + 1}</td><td>${score.name}</td><td>${score.time.toFixed(2)}</td>`;           
+                tbody.appendChild(row);
+            });
+        }
+        loadScores();
+    </script>
+</body>
+</html>
