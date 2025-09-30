@@ -2,9 +2,10 @@
   "name": "wheres-waldo",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
-    
+    "seed": "npx prisma db seed -- --seed-script=node prisma/seed.js",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -12,12 +13,18 @@
   "dependencies": {
     "@prisma/client": "^6.16.2",
     "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
-    "express-session": "^1.18.2"
+    "express-rate-limit": "^8.1.0",
+    "express-session": "^1.18.2",
+    "helmet": "^8.1.0",
+    "jest": "^30.2.0"
   },
-  "prisma": {
-    "seed": "node prisma/seed.js"
+  "devDependencies": {
+    "eslint": "^9.36.0",
+    "prettier": "^3.6.2",
+    "prisma": "^6.16.3"
   }
 }
