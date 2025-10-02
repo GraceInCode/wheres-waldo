@@ -12,7 +12,17 @@ const app = express();
 const prisma = new PrismaClient();
 
 app.use(cors());
-app.use(helmet())
+
+// Configure helmet with custom CSP to allow external images and inline scripts
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "img-src": ["'self'", "data:", "https:", "http:"],
+      "script-src": ["'self'", "'unsafe-inline'"],
+    },
+  },
+}));
 
 // View engine setup
 app.set('view engine', 'ejs');
@@ -30,10 +40,10 @@ app.use(session({
 
 // Middleware to start game if not started
 app.use((req, res, next) => {
-    if (!req.session.game) {
-        req.session.game = { startTime: Date.now(), found: [], imageId: 1 }; // Default imageId
-    }
-    next();
+  if (!req.session.game) {
+    req.session.game = { startTime: Date.now(), found: [], imageId: null };
+  }
+  next();
 });
 
 // Global error handler
@@ -44,15 +54,15 @@ app.use((err, req, res, next) => {
 
 // Routes
 app.get('/', async (req, res) => {
-    if (!req.session.game || !req.session.game.imageId) {
-        return res.redirect('/images');
-    }
-    const image = await prisma.image.findUnique({ where: { id: req.session.game.imageId } });
-    const characters = await prisma.character.findMany({
-        where: { imageId: image.id},
-        select: { id: true, name: true }
-    });
-    res.render('index', { imageUrl: image.url, characters });
+  if (!req.session.game || !req.session.game.imageId) {
+    return res.redirect('/images');
+  }
+  const image = await prisma.image.findUnique({ where: { id: req.session.game.imageId } });
+  const characters = await prisma.character.findMany({
+    where: { imageId: image.id },
+    select: { id: true, name: true, imageUrl: true }  // Ensure imageUrl here
+  });
+  res.render('index', { imageUrl: image.url, characters });
 });
 
 // API: Validate click
@@ -75,7 +85,7 @@ app.post('/validate', async (req, res) => {
         const allChars = await prisma.character.findMany({ where: { imageId: char.imageId } });
         if (req.session.game.found.length === allChars.length) {
             const time = (Date.now() - req.session.game.startTime) / 1000;
-            return res.json({ success: true, allFound: true, time });
+            return res.json({ success: true, allFound: true, time, position: { x: char.x, y: char.y } });
         }
         return res.json({ success: true, position: { x: char.x, y: char.y } }); // Send real position for marker
     }
@@ -98,22 +108,47 @@ app.post('/scores', async (req, res) => {
 
 // Get high scores (for display)
 app.get('/scores', async (req, res) => {
-    const imageId = req.session.game?.imageId || null; 
+    // Get imageId from query parameter or session
+    let imageId = req.query.imageId ? parseInt(req.query.imageId) : req.session.game?.imageId;
+    
+    // If no imageId, get the first image's scores
     if (!imageId) {
-        return res.status(400).json({ error: 'No image selected' });
+        const firstImage = await prisma.image.findFirst();
+        imageId = firstImage?.id;
     }
+    
+    if (!imageId) {
+        return res.json({ scores: [], imageName: 'No levels available' });
+    }
+    
     const scores = await prisma.highScore.findMany({
         where: { imageId: imageId },
         orderBy: { time: 'asc' },
         take: 10,
     });
-    res.json(scores);
+    const image = await prisma.image.findUnique({ 
+        where: { id: imageId },
+        select: { name: true }
+    });
+    res.json({ scores, imageName: image?.name });
 });
 
-app.get('/highscores', (req, res) => {
-    if (!req.session.game || !req.session.game.imageId) {
-        return res.redirect('/images');
-    }
+// DEBUG: Get character positions for current image
+app.get('/debug/characters', async (req, res) => {
+  const imageId = req.session.game?.imageId;
+  if (!imageId) {
+    return res.json([]);
+  }
+  const characters = await prisma.character.findMany({
+    where: { imageId: imageId },
+    select: { id: true, name: true, x: true, y: true, imageUrl: true }  // Add imageUrl
+  });
+  res.json(characters);
+});
+
+app.get('/highscores', async (req, res) => {
+    // Allow viewing highscores even without an active game
+    // Just redirect to images if no game has ever been played
     res.render('highscores');
 })
 
@@ -136,6 +171,15 @@ app.post('/start', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+    });
+}
+
+app.use((err, req, res, next) => {
+    console.error('Server error:', err.stack);
+    res.status(500).json({ error: 'Internal server error' });
+})
+
+module.exports = app; // For testing
