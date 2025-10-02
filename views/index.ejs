@@ -1,28 +1,155 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wheres Waldo</title>
-    <style>
-        #photo { max-width: 100%; cursor: crosshair; position: relative; }
-        #markers { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        #target-box { position: absolute; display: none; border: 2px solid red; width: 50px; height: 50px; }
-        #target-box select { width: 100%; }
-        #timer { position: absolute; top: 10px; right: 10px; font-size: 10px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wheres Waldo</title>
+<style>
+body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+#game-container { 
+    position: relative; 
+    display: inline-block;
+    margin: 20px;
+}
+#photo { 
+    max-width: 100%; 
+    cursor: crosshair; 
+    display: block;
+}
+#markers { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%;
+    pointer-events: none;
+}
+#target-box { 
+    position: fixed; 
+    display: none; 
+    border: 2px solid red; 
+    background: white;
+    z-index: 2000;
+    padding: 5px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+#target-box select { 
+    width: 100%; 
+    pointer-events: auto;
+    padding: 5px;
+    font-size: 14px;
+}
+#timer { 
+    position: fixed; 
+    top: 10px; 
+    right: 10px; 
+    font-size: 20px;
+    background: white;
+    padding: 10px;
+    border: 2px solid black;
+    z-index: 1000;
+    font-weight: bold;
+}
+#character-sidebar {
+    position: fixed;
+    top: 70px;
+    right: 10px;
+    background: white;
+    border: 2px solid black;
+    padding: 10px;
+    z-index: 1000;
+}
+#character-sidebar h3 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+}
+.character-item {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+    padding: 5px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+}
+.character-item.found {
+    opacity: 0.5;
+    text-decoration: line-through;
+}
+.character-img {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+    object-fit: cover;
+}
+.character-name {
+    font-weight: bold;
+}
+
+#target-box {
+  position: absolute;
+  display: none;
+  border: 2px solid red;
+  background: white;
+  padding: 10px;
+  z-index: 1000;
+  max-height: 200px;
+  overflow-y: auto;  /* Scroll if many characters */
+}
+
+.char-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.char-option {
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.char-option:hover {
+  background: #f0f0f0;
+}
+
+.char-option .char-img {
+  width: 30px;
+  height: 30px;
+  margin-right: 10px;
+  border-radius: 50%;  /* Round avatars */
+}
+</style>
 </head>
 <body>
-    <div id="timer">Time: 0s</div>
-    <img id="photo" src="<%= imageUrl %>" alt="Find them!">
-    <div id="target-box">
-        <select id="char-select">
-            <% characters.forEach(char => { %>
-            <option value="<%= char.id %>"><%= char.name %></option>
-            <% }); %>
-        </select>
+<div id="timer">Time: 0:00</div>
+<div id="character-sidebar">
+    <h3>Find These:</h3>
+    <div id="character-list">
+        <% characters.forEach(char => { %>
+        <div class="character-item" data-char-id="<%= char.id %>">
+            <img class="character-img" src="<%= char.imageUrl %>" alt="<%= char.name %>">
+            <span class="character-name"><%= char.name %></span>
+        </div>
+        <% }); %>
     </div>
-    <div id="markers"></div> <!-- For correct markers -->
-    <script src="/script.js"></script> <!-- Frontend JS below -->
+</div>
+<div id="game-container">
+    <img id="photo" src="<%= imageUrl %>" alt="Find them!">
+    <div id="markers"></div>
+</div>
+<div id="target-box">
+  <div id="char-list" class="char-list">
+    <% characters.forEach(char => { %>
+      <div class="char-option" data-char-id="<%= char.id %>">
+        <img src="<%= char.imageUrl %>" class="char-img" alt="<%= char.name %>">
+        <%= char.name %>
+      </div>
+    <% }); %>
+  </div>
+</div>
+<script src="/script.js"></script>
 </body>
 </html>

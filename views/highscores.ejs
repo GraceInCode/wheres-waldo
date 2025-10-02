@@ -1,31 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>High Scores</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>High Scores</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 20px;
+        background: #f0f0f0;
+    }
+    h1 {
+        text-align: center;
+        color: #333;
+    }
+    table {
+        width: 100%;
+        background: white;
+        border-collapse: collapse;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin: 20px 0;
+    }
+    th, td {
+        padding: 15px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    th {
+        background: #4CAF50;
+        color: white;
+        font-weight: bold;
+    }
+    tr:hover {
+        background: #f5f5f5;
+    }
+    .button-container {
+        text-align: center;
+        margin-top: 20px;
+    }
+    .btn {
+        display: inline-block;
+        padding: 15px 30px;
+        margin: 10px;
+        background: #4CAF50;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: bold;
+        transition: background 0.3s;
+    }
+    .btn:hover {
+        background: #45a049;
+    }
+    .btn-secondary {
+        background: #2196F3;
+    }
+    .btn-secondary:hover {
+        background: #0b7dda;
+    }
+    #image-name {
+        text-align: center;
+        color: #666;
+        margin-bottom: 20px;
+    }
+</style>
 </head>
 <body>
-    <h1>High Scores</h1>
-    <table>
-        <thead>
-            <tr><th>Rank</th><th>Name</th><th>Time (s)</th></tr>
-        </thead>
-        <tbody id="scores-body"></tbody>
-    </table>
-    <a href="/">Back to Game</a>
-    <script>
-        async function loadScores() {
-            const response = await fetch('/scores');
-            const scores = await response.json();
-            const tbody = document.getElementById('scores-body');
-            scores.forEach((score, index) => {
+<h1>🏆 High Scores 🏆</h1>
+<div id="image-name"></div>
+<table>
+<thead>
+<tr><th>Rank</th><th>Name</th><th>Time</th></tr>
+</thead>
+<tbody id="scores-body"></tbody>
+</table>
+<div class="button-container">
+    <a href="/images" class="btn btn-secondary">Select Level</a>
+    <a href="/" class="btn">Play Again</a>
+</div>
+<script>
+async function loadScores() {
+    try {
+        const response = await fetch('/scores');
+        const data = await response.json();
+        
+        if (data.error) {
+            alert(data.error);
+            window.location.href = '/images';
+            return;
+        }
+        
+        const tbody = document.getElementById('scores-body');
+        const imageName = document.getElementById('image-name');
+        
+        if (data.scores && data.scores.length > 0) {
+            if (data.imageName) {
+                imageName.textContent = `Level: ${data.imageName}`;
+            }
+            
+            data.scores.forEach((score, index) => {
                 const row = document.createElement('tr');
-                row.innerHTML = `<td>${index + 1}</td><td>${score.name}</td><td>${score.time.toFixed(2)}</td>`;           
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+                row.innerHTML = `<td>${medal} ${index + 1}</td><td>${score.name}</td><td>${score.time.toFixed(2)}s</td>`;
                 tbody.appendChild(row);
             });
+        } else {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">No scores yet. Be the first!</td></tr>';
         }
-        loadScores();
-    </script>
+    } catch (error) {
+        console.error('Error loading scores:', error);
+        alert('Error loading scores');
+    }
+}
+loadScores();
+</script>
 </body>
 </html>

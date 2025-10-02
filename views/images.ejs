@@ -1,21 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Select Image</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Select Image</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 20px;
+        background: #f0f0f0;
+    }
+    h1 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 30px;
+    }
+    .header-buttons {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .btn {
+        display: inline-block;
+        padding: 12px 25px;
+        margin: 5px;
+        background: #2196F3;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: bold;
+        transition: background 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+    .btn:hover {
+        background: #0b7dda;
+    }
+    ul {
+        list-style: none;
+        padding: 0;
+    }
+    li {
+        margin: 15px 0;
+    }
+    .level-button {
+        width: 100%;
+        padding: 20px;
+        background: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.3s, transform 0.2s;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .level-button:hover {
+        background: #45a049;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+</style>
 </head>
 <body>
-    <h1>Choose a Level</h1>
-    <ul>
-        <% images.forEach(img => { %>
-            <li>
-              <form action="/start" method="POST">
-                  <input type="hidden" name="imageId" value="<%= img.id %>">
-                  <button type="submit"><%= img.name || 'Image ' + img.id %></button>
-              </form>
-            </li>
-        <% }); %>
-    </ul>
+<h1>🔍 Choose a Level 🔍</h1>
+<div class="header-buttons">
+    <a href="/highscores" class="btn">View High Scores</a>
+</div>
+<ul>
+<% images.forEach(img => { %>
+<li>
+<form action="/start" method="POST">
+<input type="hidden" name="imageId" value="<%= img.id %>">
+<button type="submit" class="level-button"><%= img.name || 'Image ' + img.id %></button>
+</form>
+</li>
+<% }); %>
+</ul>
 </body>
 </html>
