@@ -22,12 +22,13 @@ model Image {
 }
 
 model Character {
-  id      Int    @id @default(autoincrement())
-  name    String // e.g. "Waldo"
-  x       Float // 0-1 normalized coordinate
-  y       Float // 0-1 normalized coordinate
-  imageId Int
-  image   Image  @relation(fields: [imageId], references: [id])
+  id       Int    @id @default(autoincrement())
+  name     String // e.g. "Waldo"
+  x        Float // 0-1 normalized coordinate
+  y        Float // 0-1 normalized coordinate
+  imageId  Int
+  imageUrl String @default("")
+  image    Image  @relation(fields: [imageId], references: [id])
 }
 
 model HighScore {
