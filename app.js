@@ -51,10 +51,27 @@ app.use((req, res, next) => {
   next();
 });
 
-// Global error handler
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Error handling: Less detail in prod
 app.use((err, req, res, next) => {
-    console.error(err);
-    res.status(500).json('Something broke!');
+  console.error('Server error:', err.stack);
+  res.status(500).json(isProduction ? { error: 'Internal server error' } : { error: err.message });
+});
+
+// Logging: Verbose in dev
+if (!isProduction) {
+  app.use(require('morgan')('dev')); 
+}
+
+// Debug routes: Disable in prod
+if (!isProduction) {
+  app.get('/debug/characters', async (req, res) => { /* ... */ });
+}
+
+// Prisma: Less logging in prod
+const prisma = new PrismaClient({
+  log: isProduction ? ['error'] : ['query', 'info', 'warn', 'error'],
 });
 
 // Routes
