@@ -31,7 +31,7 @@ async function main() {
 
     const image3 = await prisma.image.create({
       data: { 
-        name: 'Olympic stadium', 
+        name: 'Circus', 
         url: 'https://assets.epuzzle.info/puzzle/083/714/original.jpg' 
       },
     });
@@ -40,25 +40,27 @@ async function main() {
     // Characters with valid, loading URLs (from Waldo Fandom, 2025)
     await prisma.character.createMany({
       data: [
-        { name: 'Waldo', x: 0.45, y: 0.6, imageId: image1.id, imageUrl: 'https://static.wikia.nocookie.net/whereswaldo/images/5/5b/Waldo.png/revision/latest?cb=20190730195748' },
-        { name: 'Wizard', x: 0.7, y: 0.2, imageId: image1.id, imageUrl: 'https://static.wikia.nocookie.net/whereswaldo/images/1/1c/Wizard_Whitebeard.png/revision/latest?cb=20190731142424' },
-        { name: 'Odlaw', x: 0.2, y: 0.8, imageId: image1.id, imageUrl: 'https://static.wikia.nocookie.net/whereswaldo/images/0/09/Odlulu.png/revision/latest?cb=20190730203516' },  // Odlaw variant
+        { name: 'Waldo', x: 0.35, y: 0.28, imageId: image1.id, imageUrl: 'https://static.wikia.nocookie.net/whereswaldo/images/5/5b/Waldo.png/revision/latest?cb=20190730195748' },
+        { name: 'Odlaw', x: 0.8, y: 0.50, imageId: image1.id, imageUrl: 'https://static.wikia.nocookie.net/whereswaldo/images/0/09/Odlulu.png/revision/latest?cb=20190730203516' },  // Odlaw variant
       ],
     });
     console.log('Created characters for image1.');
 
     await prisma.character.createMany({
       data: [
-        { name: 'Waldo', x: 0.3, y: 0.5, imageId: image2.id, imageUrl: 'https://static.wikia.nocookie.net/whereswaldo/images/5/5b/Waldo.png/revision/latest?cb=20190730195748' },
-        { name: 'Wizard', x: 0.6, y: 0.4, imageId: image2.id, imageUrl: 'https://static.wikia.nocookie.net/whereswaldo/images/1/1c/Wizard_Whitebeard.png/revision/latest?cb=20190731142424' },
+        // Waldo: Moved slightly left and down to center on him in the crowd.
+        { name: 'Waldo', x: 0.35, y: 0.25, imageId: image2.id, imageUrl: 'https://static.wikia.nocookie.net/whereswaldo/images/5/5b/Waldo.png/revision/latest?cb=20190730195748' },
+        
+      // Wizard: Moved up significantly to be in the boat, not on the fish below.
+        { name: 'Wizard', x: 0.45, y: 0.25, imageId: image2.id, imageUrl: 'https://static.wikia.nocookie.net/whereswaldo/images/1/1c/Wizard_Whitebeard.png/revision/latest?cb=20190731142424' },        
       ],
     });
     console.log('Created characters for image2.');
 
     await prisma.character.createMany({
       data: [
-        { name: 'Waldo', x: 0.55, y: 0.7, imageId: image3.id, imageUrl: 'https://static.wikia.nocookie.net/whereswaldo/images/5/5b/Waldo.png/revision/latest?cb=20190730195748' },
-        { name: 'Odlaw', x: 0.1, y: 0.3, imageId: image3.id, imageUrl: 'https://static.wikia.nocookie.net/whereswaldo/images/0/09/Odlulu.png/revision/latest?cb=20190730203516' },
+        { name: 'Waldo', x: 0.82, y: 0.13, imageId: image3.id, imageUrl: 'https://static.wikia.nocookie.net/whereswaldo/images/5/5b/Waldo.png/revision/latest?cb=20190730195748' },
+        { name: 'Wizard', x: 0.7, y: 0.8, imageId: image3.id, imageUrl: 'https://static.wikia.nocookie.net/whereswaldo/images/1/1c/Wizard_Whitebeard.png/revision/latest?cb=20190731142424' },
       ],
     });
     console.log('Created characters for image3.');
