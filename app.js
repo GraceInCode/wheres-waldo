@@ -13,7 +13,11 @@ require('dotenv').config();
 
 
 const app = express();
-const prisma = new PrismaClient();
+
+// Prisma: Less logging in prod
+const prisma = new PrismaClient({
+  log: isProduction ? ['error'] : ['query', 'info', 'warn', 'error'],
+});
 
 app.use(cors());
 
@@ -68,11 +72,6 @@ if (!isProduction) {
 if (!isProduction) {
   app.get('/debug/characters', async (req, res) => { /* ... */ });
 }
-
-// Prisma: Less logging in prod
-const prisma = new PrismaClient({
-  log: isProduction ? ['error'] : ['query', 'info', 'warn', 'error'],
-});
 
 // Routes
 app.get('/', async (req, res) => {
