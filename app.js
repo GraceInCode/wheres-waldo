@@ -1,5 +1,9 @@
 const express = require('express');
 const session = require('express-session');
+const RedisStore = require('connect-redis')(session);
+const redis = require('redis');
+const redisClient = redis.createClient({ url: process.env.REDIS_URL || 'redis://localhost:6379' });
+redisClient.connect().catch(console.error);
 const bodyParser = require('body-parser');
 const { PrismaClient } = require('@prisma/client');
 const path = require('path');
@@ -36,6 +40,7 @@ app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
+    store: new RedisStore({ client: redisClient }),
 }));
 
 // Middleware to start game if not started
