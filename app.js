@@ -1,6 +1,6 @@
 const express = require('express');
 const session = require('express-session');
-const RedisStore = require('connect-redis').default;  // Fixed syntax for v7+
+const { RedisStore } = require('connect-redis').default;  // Fixed syntax for v7+
 const { createClient } = require('redis');  // Use createClient
 const bodyParser = require('body-parser');
 const { PrismaClient } = require('@prisma/client');
