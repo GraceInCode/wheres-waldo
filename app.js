@@ -13,53 +13,30 @@ const isProduction = process.env.NODE_ENV === 'production';  // Moved up for ref
 
 const app = express();
 
-// Decide which RedisStore to use
-let RedisStore;
-if (typeof connRedis === 'function') {
-  RedisStore = connRedis(session);  // For older versions
-} else if (connRedis.default && typeof connRedis.default == 'function') {
-  RedisStore = connRedis.default;  // For newer versions
-} else if (connRedis.RedisStore && typeof connRedis.RedisStore == 'function') {
-  RedisStore = connRedis.RedisStore; // Fallback
-} else {
-  console.error('connect-redis exports:', Object.keys(connRedis || {}));
-  throw new Error('Could not find RedisStore constructor on connect-redis package');
-}
-console.log('Using RedisStore from connect-redis shaped as:', typeof RedisStore);
-
 // Prisma with log config
 const prisma = new PrismaClient({
   log: isProduction ? ['error'] : ['query', 'info', 'warn', 'error'],
 });
 
-const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
-});
-redisClient.on('error', err => console.log('Redis Client Error', err));
-(async () => {
-  try {
-    await redisClient.connect();
-    console.log('Redis connected');
+const redisClient = createClient({ url: process.env.REDIS_URL || 'redis://localhost:6379' });
+redisClient.on('error', (err) => console.error('Redis Client Error', err));
+// don't await here — connect in background but create store now
+redisClient.connect().catch(err => console.error('Redis connect failed', err));
 
-    // create store now that the client is connected
-    const redisStore = new RedisStore({ client: redisClient });
+// Decide which RedisStore to use
+let RedisStore;
+if (typeof connRedis === 'function') {
+  RedisStore = connRedis;
+} else if (connRedis && typeof connRedis.default === 'function') {
+  RedisStore = connRedis.default;
+} else if (connRedis && typeof connRedis.RedisStore === 'function') {
+  RedisStore = connRedis.RedisStore;
+} else {
+  console.error('connect-redis exports:', Object.keys(connRedis || {}));
+  throw new Error('Could not determine RedisStore from connect-redis package');
+}
 
-    // attach session middleware
-    app.use(session({
-      store: redisStore,
-      secret: process.env.SESSION_SECRET || 'change-me-in-prod',
-      resave: false,
-      saveUninitialized: false,
-      cookie: { secure: !!isProduction }
-    }));
-
-    // ... the rest of your app setup (middleware/routes) should follow below ...
-  } catch (err) {
-    console.error('Failed to initialize Redis client/store:', err);
-    // rethrow so process exits and deploy logs the error (optional)
-    throw err;
-  }
-})();
+const redisStore = new RedisStore({ client: redisClient });
 
 // CORS
 app.use(cors());
@@ -73,7 +50,9 @@ app.use(helmet({
       "script-src": ["'self'", "'unsafe-inline'"],
     },
   },
+  crossOriginEmbedderPolicy: { policy: "same-origin" },
 }));
+
 
 // View engine and static
 app.set('view engine', 'ejs');
@@ -82,8 +61,17 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+// Session config 
+app.use(session({
+  store: redisStore,
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: !!isProduction }
+}));
 
-// Game middleware (unchanged)
+
+// Game middleware 
 app.use((req, res, next) => {
   if (!req.session.game) {
     req.session.game = { startTime: Date.now(), found: [], imageId: null };
