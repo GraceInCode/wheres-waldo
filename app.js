@@ -50,9 +50,12 @@ app.use(helmet({
       "script-src": ["'self'", "'unsafe-inline'"],
     },
   },
-  crossOriginEmbedderPolicy: { policy: "same-origin" },
 }));
 
+app.use((req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  next();
+})
 
 // View engine and static
 app.set('view engine', 'ejs');
