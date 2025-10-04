@@ -1,6 +1,6 @@
 const express = require('express');
 const session = require('express-session');
-const { RedisStore } = require('connect-redis').default;  // Fixed syntax for v7+
+const { RedisStore, RedisStore } = require('connect-redis');  // Fixed syntax for v7+
 const { createClient } = require('redis');  // Use createClient
 const bodyParser = require('body-parser');
 const { PrismaClient } = require('@prisma/client');
@@ -18,11 +18,13 @@ const prisma = new PrismaClient({
   log: isProduction ? ['error'] : ['query', 'info', 'warn', 'error'],
 });
 
-// Redis client (fixed creation and connect)
-const redisClient = createClient({ url: process.env.REDIS_URL || 'redis://localhost:6379' });
+const redisClient = createClient({
+  url: process.env.REDIS_URL || 'redis://localhost:6379'
+});
 redisClient.on('error', err => console.log('Redis Client Error', err));
-redisClient.connect().catch(console.error);  // Async connect with catch
+redisClient.connect().catch(console.error);
 
+// CORS
 app.use(cors());
 
 // Helmet config (unchanged)
@@ -43,12 +45,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+const RedisStore = new RedisStore({ client: redisClient })
+
 // Session with Redis store (fixed)
 app.use(session({
+  store: RedisStore,
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: true,
-  store: new RedisStore({ client: redisClient }),
+  cookie: { secure: !!isProduction }
 }));
 
 // Game middleware (unchanged)
