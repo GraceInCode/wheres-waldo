@@ -1,6 +1,6 @@
 const express = require('express');
 const session = require('express-session');
-const RedisStore = require('connect-redis').default;  // Fixed syntax for v7+
+const connRedis = require('connect-redis');
 const { createClient } = require('redis');  // Use createClient
 const bodyParser = require('body-parser');
 const { PrismaClient } = require('@prisma/client');
@@ -13,6 +13,20 @@ const isProduction = process.env.NODE_ENV === 'production';  // Moved up for ref
 
 const app = express();
 
+// Decide which RedisStore to use
+let RedisStore;
+if (typeof connRedis === 'function') {
+  RedisStore = connRedis(session);  // For older versions
+} else if (connRedis.default && typeof connRedis.default == 'function') {
+  RedisStore = connRedis.default;  // For newer versions
+} else if (connRedis.RedisStore && typeof connRedis.RedisStore == 'function') {
+  RedisStore = connRedis.RedisStore; // Fallback
+} else {
+  console.error('connect-redis exports:', Object.keys(connRedis || {}));
+  throw new Error('Could not find RedisStore constructor on connect-redis package');
+}
+console.log('Using RedisStore from connect-redis shaped as:', typeof RedisStore);
+
 // Prisma with log config
 const prisma = new PrismaClient({
   log: isProduction ? ['error'] : ['query', 'info', 'warn', 'error'],
@@ -22,7 +36,30 @@ const redisClient = createClient({
   url: process.env.REDIS_URL || 'redis://localhost:6379'
 });
 redisClient.on('error', err => console.log('Redis Client Error', err));
-redisClient.connect().catch(console.error);
+(async () => {
+  try {
+    await redisClient.connect();
+    console.log('Redis connected');
+
+    // create store now that the client is connected
+    const redisStore = new RedisStore({ client: redisClient });
+
+    // attach session middleware
+    app.use(session({
+      store: redisStore,
+      secret: process.env.SESSION_SECRET || 'change-me-in-prod',
+      resave: false,
+      saveUninitialized: false,
+      cookie: { secure: !!isProduction }
+    }));
+
+    // ... the rest of your app setup (middleware/routes) should follow below ...
+  } catch (err) {
+    console.error('Failed to initialize Redis client/store:', err);
+    // rethrow so process exits and deploy logs the error (optional)
+    throw err;
+  }
+})();
 
 // CORS
 app.use(cors());
@@ -45,16 +82,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-const redisStore = new RedisStore({ client: redisClient })
-
-// Session with Redis store (fixed)
-app.use(session({
-  store: redisStore,
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: true,
-  cookie: { secure: !!isProduction }
-}));
 
 // Game middleware (unchanged)
 app.use((req, res, next) => {
