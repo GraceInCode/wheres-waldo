@@ -1,6 +1,6 @@
 const express = require('express');
 const session = require('express-session');
-const { RedisStore, RedisStore } = require('connect-redis');  // Fixed syntax for v7+
+const { RedisStore, RedisStore } = require('connect-redis').default;  // Fixed syntax for v7+
 const { createClient } = require('redis');  // Use createClient
 const bodyParser = require('body-parser');
 const { PrismaClient } = require('@prisma/client');
@@ -45,11 +45,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-const RedisStore = new RedisStore({ client: redisClient })
+const redisStore = new RedisStore({ client: redisClient })
 
 // Session with Redis store (fixed)
 app.use(session({
-  store: RedisStore,
+  store: redisStore,
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: true,
