@@ -1,7 +1,7 @@
 const express = require('express');
 const session = require('express-session');
-const connRedis = require('connect-redis');
-const { createClient } = require('redis');  // Use createClient
+const { RedisStore } = require('connect-redis');
+const { createClient } = require('redis');
 const bodyParser = require('body-parser');
 const { PrismaClient } = require('@prisma/client');
 const path = require('path');
@@ -9,36 +9,20 @@ const cors = require('cors');
 const helmet = require('helmet');
 require('dotenv').config();
 
-const isProduction = process.env.NODE_ENV === 'production';  // Moved up for reference
+const isProduction = process.env.NODE_ENV === 'production';
 
 const app = express();
 
-// Prisma with log config
+// Prisma
 const prisma = new PrismaClient({
   log: isProduction ? ['error'] : ['query', 'info', 'warn', 'error'],
 });
 
+// Redis
 const redisClient = createClient({ url: process.env.REDIS_URL || 'redis://localhost:6379' });
-redisClient.on('error', (err) => console.error('Redis Client Error', err));
-// don't await here — connect in background but create store now
-redisClient.connect().catch(err => console.error('Redis connect failed', err));
+redisClient.on('error', err => console.log('Redis Client Error', err));
+redisClient.connect().catch(console.error);
 
-// Decide which RedisStore to use
-let RedisStore;
-if (typeof connRedis === 'function') {
-  RedisStore = connRedis;
-} else if (connRedis && typeof connRedis.default === 'function') {
-  RedisStore = connRedis.default;
-} else if (connRedis && typeof connRedis.RedisStore === 'function') {
-  RedisStore = connRedis.RedisStore;
-} else {
-  console.error('connect-redis exports:', Object.keys(connRedis || {}));
-  throw new Error('Could not determine RedisStore from connect-redis package');
-}
-
-const redisStore = new RedisStore({ client: redisClient });
-
-// CORS
 app.use(cors());
 
 // Helmet config (unchanged)
@@ -66,11 +50,10 @@ app.use(bodyParser.json());
 
 // Session config 
 app.use(session({
-  store: redisStore,
   secret: process.env.SESSION_SECRET,
   resave: false,
-  saveUninitialized: false,
-  cookie: { secure: !!isProduction }
+  saveUninitialized: true,
+  store: new RedisStore({ client: redisClient }),
 }));
 
 
