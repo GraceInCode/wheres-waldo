@@ -1,7 +1,7 @@
 const express = require('express');
 const session = require('express-session');
-const RedisStore = require('connect-redis')(session);  // v7 syntax
-const redis = require('redis');
+const { RedisStore } = require('connect-redis');
+const { createClient } = require('redis');
 const bodyParser = require('body-parser');
 const { PrismaClient } = require('@prisma/client');
 const path = require('path');
@@ -19,7 +19,7 @@ const prisma = new PrismaClient({
 });
 
 // Redis
-const redisClient = redis.createClient(process.env.REDIS_URL || 'redis://localhost:6379');
+const redisClient = createClient({ url: process.env.REDIS_URL || 'redis://localhost:6379' });
 redisClient.on('error', err => console.log('Redis Client Error', err));
 redisClient.connect().catch(console.error);
 
@@ -55,7 +55,6 @@ app.use(session({
   saveUninitialized: true,
   store: new RedisStore({ client: redisClient }),
 }));
-
 
 // Game middleware 
 app.use((req, res, next) => {
