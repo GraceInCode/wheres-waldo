@@ -23,9 +23,10 @@ const redisClient = createClient({ url: process.env.REDIS_URL || 'redis://localh
 redisClient.on('error', err => console.log('Redis Client Error', err));
 redisClient.connect().catch(console.error);
 
+// CORS
 app.use(cors());
 
-// Helmet config (unchanged)
+// Helmet
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -39,24 +40,28 @@ app.use(helmet({
 app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
   next();
-})
+});
 
-// View engine and static
+// View engine/static/body
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-// Session config 
+// Session (fixed v7 syntax)
 app.use(session({
+  store: new RedisStore({
+    client: redisClient,
+    prefix: "waldo:",  // Unique prefix
+  }),
   secret: process.env.SESSION_SECRET,
   resave: false,
-  saveUninitialized: true,
-  store: new RedisStore({ client: redisClient }),
+  saveUninitialized: false,
+  cookie: { secure: !!isProduction }
 }));
 
-// Game middleware 
+// Game middleware
 app.use((req, res, next) => {
   if (!req.session.game) {
     req.session.game = { startTime: Date.now(), found: [], imageId: null };
@@ -64,12 +69,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// Logging: Verbose in dev
+// Logging in dev
 if (!isProduction) {
   app.use(require('morgan')('dev'));
 }
 
-// Debug routes: Disable in prod
+// Debug routes in dev
 if (!isProduction) {
   app.get('/debug/characters', async (req, res) => {
     const imageId = req.session.game?.imageId;
@@ -84,7 +89,7 @@ if (!isProduction) {
   });
 }
 
-// Routes 
+// Routes (unchanged)
 app.get('/', async (req, res) => {
   console.log('Session in /:', req.session.game);
   if (!req.session.game || !req.session.game.imageId) {
@@ -180,7 +185,7 @@ app.post('/start', (req, res) => {
     found: [],
     imageId: parseInt(imageId)
   };
-  console.log('Session in /:', req.session.game);
+  console.log('Session in /start:', req.session.game);
   res.redirect('/');
 });
 
@@ -192,10 +197,6 @@ if (require.main === module) {
   });
 }
 
-// Single error handler 
-app.use((err, req, res, next) => {
-  console.error('Server error:', err.stack);
-  res.status(500).json({ error: 'Internal server error' });
-});
+// Error handler (unchanged)
 
 module.exports = app;
