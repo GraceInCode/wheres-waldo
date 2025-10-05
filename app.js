@@ -1,6 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const { RedisStore } = require('connect-redis');
+console.log('connect-redis exports:', require('connect-redis'));  // Debug exports
 const { createClient } = require('redis');
 const bodyParser = require('body-parser');
 const { PrismaClient } = require('@prisma/client');
@@ -49,16 +50,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-// Session (fixed v7 syntax)
 app.use(session({
-  store: new RedisStore({
-    client: redisClient,
-    prefix: "waldo:",  // Unique prefix
-  }),
   secret: process.env.SESSION_SECRET,
   resave: false,
-  saveUninitialized: false,
-  cookie: { secure: !!isProduction }
+  saveUninitialized: true,
+  // store: new RedisStore({ client: redisClient }),  // Comment for memory store
 }));
 
 // Game middleware
