@@ -102,8 +102,9 @@ if (!isProduction) {
   });
 }
 
-// Routes (unchanged from your code)
+// Routes 
 app.get('/', async (req, res) => {
+  console.log('Session in /:', req.session.game);
   if (!req.session.game || !req.session.game.imageId) {
     return res.redirect('/images');
   }
@@ -197,6 +198,7 @@ app.post('/start', (req, res) => {
     found: [],
     imageId: parseInt(imageId)
   };
+  console.log('Session in /:', req.session.game);
   res.redirect('/');
 });
 
